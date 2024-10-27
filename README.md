@@ -37,7 +37,7 @@ var msg string = <- messages
 | `<-` | 연산자 |
 | `messages` | 채널 인스턴스 |
 
-### 예제
+### > 예제
 ```go
 package main
 import (
@@ -133,7 +133,6 @@ func main() {
 }
 ```
 ```go
-==> Running golang-channel...
 number: 0, Square: 0
 number: 2, Square: 4
 number: 4, Square: 16
@@ -164,11 +163,11 @@ make: *** [run] Error 2
 
 1. 채널에 데이터를 10번 넣습니다.
 2. for range 구문을 사용하면 채널에서 데이터를 계속 기다릴 수 있습니다.
-3. wg.Wait() 메서드로 작업이 완료되기를 기다립니다. 하지만 for range 구문은 채널에 데이터가 들어오기를 계쏙 기다리기 때문에 
+3. wg.Wait() 메서드로 작업이 완료되기를 기다립니다. 하지만 for range 구문은 채널에 데이터가 들어오기를 계속 기다리기 때문에 
 4. 가 실행되지 않고 모든 고루틴이 멈추게 되어
-5. deadlock 이 되시됩니다.
+5. deadlock 이 표시됩니다.
 
-### 위 예제의 문제를 수정
+### > 위 예제의 문제를 수정
 ```go
 package main
 import (
@@ -201,7 +200,6 @@ func main() {
 }
 ```
 ```go
-==> Running golang-channel...
 number: 0, Square: 0
 number: 2, Square: 4
 number: 4, Square: 16
@@ -217,11 +215,125 @@ close(ch)
 1. 데이터를 모두 넣고 채널이 더는 필요없기 때문에 close(ch)를 호출해 닫아줍니다.
 2. for range에서 데이터를 모두 처리하고 난 다음에 채널이 닫힌 상태이면 for문을 종료합니다.
 
-
-
 ### 23.1.7 select문
+채널에서 데이터가 들어오기를 대기하는 상황에서 만약 데이터가 들어오지 않으면 다른작업을 하거나, 아니면 여러 채널을 동시에 대시하고 싶을 때 어떻게 할까요?
+바로 select문을 사용해서 대기하면 됩니다.
+```go
+select {
+case n := <- ch1:
+    ...                 // ch1 채널에서 데이터를 빼낼 수 있을 때 실행
+case n2 := <- ch2:
+    ...                 // ch2 채널에서 데이터를 빼낼 수 있을 때 실행
+case ...
+}
+```
+select 문은 위와 같이 여러 채널을 동시에 기다릴 수 있습니다.
+하나의 채널에서 데이터를 읽어오면 해당 구문을 실행하고 select문이 종료됩니다.
+반복해서 데이터를 처리하고 싶다면 for문과 함께 사용해야 합니다.
+
+### > 예제
+```go
+package main
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+func square(wg *sync.WaitGroup, ch chan int, quit chan bool) {
+    for {
+        select {                // 2. ch와 quit 양쪽을 모두 기다림
+        case n:= <- ch:
+            fmt.Printf("number: %d, Square: %d\n", n, n*n)
+            time.Sleep(time.Second)
+        case <-quit:
+            wg.Done()
+            return
+        }
+    }
+}
+
+func main() {
+    var wg sync.WaitGroup
+    ch := make(chan int)
+    quit := make(chan bool)     // 1. 종료 채널
+
+    wg.Add(1)
+    go square(&wg, ch, quit)
+    
+    for i := 0; i < 10; i++ {
+        ch <- i * 2
+    }
+
+    quit <- true
+    wg.Wait()
+}
+```
+```go
+number: 0, Square: 0
+number: 2, Square: 4
+number: 4, Square: 16
+number: 6, Square: 36
+number: 8, Square: 64
+number: 10, Square: 100
+number: 12, Square: 144
+number: 14, Square: 196
+number: 16, Square: 256
+number: 18, Square: 324
+```
+1. quit 종료 채널을 만들어서 square() 루틴을 만들 때 알려줍니다.
+2. select문에서 ch와 quit 채널 모두를 기다립니다. ch 태널을 먼저 시도하기 때문에 ch 채널에서 데이터를 읽을 수 있으면 계속 읽습니다.
+그래서 10개의 제곱이 모두 출력되고 quit 채널에서 데이터를 읽어온다음 square() 함수가 종료됩니다.
 
 ### 23.1.8 일정 간격으로 실행
+1초 간격으로 다른 일을 수행해야 한다고 가정해봅시다.
+time 패키지의 Tick() 함수로 원하는 시간 간격으로 신호를 보내주는 채널을 만들 수 있습니다.
+
+### > 예제
+```go
+package main
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+func square(wg *sync.WaitGroup, ch chan int) {
+    tick := time.Tick(time.Second)          // 1. 1초 간격 시그널
+    terminate := time.After(10*time.Second) // 2. 10초 이후 시그널
+
+    for {                                   // 2. tick, terminate, ch 순서대로 처리
+        select {
+        case <-tick:
+            fmt.Println("Tick")
+        case <-terminate:
+            fmt.Println("Terminated!")
+            wg.Done()
+            return
+        case n:= <- ch:
+            fmt.Printf("number: %d, Square: %d\n", n, n*n)
+            time.Sleep(time.Second)
+        }
+    }
+}
+
+func main() {
+    var wg sync.WaitGroup
+    ch := make(chan int)
+    quit := make(chan bool)     // 1. 종료 채널
+
+    wg.Add(1)
+    go square(&wg, ch)
+    
+    for i := 0; i < 10; i++ {
+        ch <- i * 2
+    }
+
+    wg.Wait()
+}
+```
+```go
+```
 
 ### 23.1.9 채널로 생산자 소비자 패턴 구현하기
 
