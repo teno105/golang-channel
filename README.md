@@ -200,6 +200,20 @@ func main() {
     wg.Wait()
 }
 ```
+```go
+==> Running golang-channel...
+number: 0, Square: 0
+number: 2, Square: 4
+number: 4, Square: 16
+number: 6, Square: 36
+number: 8, Square: 64
+number: 10, Square: 100
+number: 12, Square: 144
+number: 14, Square: 196
+number: 16, Square: 256
+number: 18, Square: 324
+close(ch)
+```
 1. 데이터를 모두 넣고 채널이 더는 필요없기 때문에 close(ch)를 호출해 닫아줍니다.
 2. for range에서 데이터를 모두 처리하고 난 다음에 채널이 닫힌 상태이면 for문을 종료합니다.
 
