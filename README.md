@@ -95,8 +95,48 @@ make: *** [run] Error 2
 
 
 ### 23.1.5 버퍼를 가진 채널
+내부에 데이터를 보관할 수 있는 메모리 영역을 버퍼(buffer)라고 부릅니다. 그래서 보관함을 가지고 있는 채널을 버퍼를 가진 채널이라고 말합니다.
+make() 함수에서 뒤에 버퍼 크기를 적어주면 됩니다.
+```go
+var chan string messages = make(chan string, 2)
+```
+위과 같이 채널을 생성하면 버퍼가 2개인 채널이 만들어집니다.
 
 ### 23.1.6 채널에서 데이터 대기
+```go
+package main
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+func square(wg *sync.WaitGroup, ch chan int) {
+    for n := n range ch {       // 2. 데이터를 계속 기다림
+        fmt.Printf("number: %d, Square: %d\n", n, n*n)
+        time.Sleep(time.Second)
+    }
+    wg.Done()                   // 4. 실행되지 않음
+}
+
+func main() {
+    var wg sync.WaitGroup
+    ch := make(chan int)
+
+    wg.Add(1)
+    go square(&wg, ch)
+    
+    for i := 0; i < 10; i++ {
+        ch <- i * 2             // 1. 데이터를 넣음
+    }
+    wg.Wait()                   // 3. 작업 완료를 기다림
+}
+```
+```go
+Square: 81
+```
+
+
 
 ### 23.1.7 select문
 
