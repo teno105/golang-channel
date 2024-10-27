@@ -21,13 +21,53 @@ var messages chan string = make(chan string)
 ```go
 messages <- "This is a message"
 ```
+| 구문 | 설명 |
+| --- | --- |
+| `messages` | 채널 인스턴스 |
+| `<-` | 연산자 |
+| `This is a message` | 넣을 데이터 |
 
 ### 23.1.3 채널에서 데이터 빼기
 ```go
 var msg string = <- messages
 ```
+| 구문 | 설명 |
+| --- | --- |
+| `var msg string` | 빼낸 데이터를 담을 변수 |
+| `<-` | 연산자 |
+| `messages` | 채널 인스턴스 |
 
 ### 23.1.4 채널 크기
+```go
+package main
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+func main() {
+    var wg sysnc.WaitGroup
+    ch := make(chan int)        // 채널 생성
+
+    wg.Add(1)
+    go square(&wg, ch)          // 고루틴 생성
+    ch <- 9                     // 채널에 데이터 넣음
+    wg.Wait()                   // 작업이 완료되길 기다림
+}
+
+func square(wg *sync.WaitGroup, ch chan int) {
+    n := <-ch                   // 데이터 빼옴
+
+    time.Sleep(time.Second)     // 1초 대기
+    fmt.Printf("Square: %d\n", n*n)
+    wg.Done()
+}
+```
+```go
+Square: 81
+```
+
 
 ### 23.1.5 버퍼를 가진 채널
 
