@@ -144,7 +144,7 @@ number: 12, Square: 144
 number: 14, Square: 196
 number: 16, Square: 256
 number: 18, Square: 324
-fatal error: all goroutines are asleep - deadlock!
+fatal error: all goroutines are asleep - deadlock!  // 5.
 
 goroutine 1 [semacquire]:
 sync.runtime_Semacquire(0x14000002101?)
@@ -161,6 +161,47 @@ created by main.main in goroutine 1
         /Users/teno/study/golang-channel/cmd/golang-channel/main.go:22 +0x98
 make: *** [run] Error 2
 ```
+
+1. 채널에 데이터를 10번 넣습니다.
+2. for range 구문을 사용하면 채널에서 데이터를 계속 기다릴 수 있습니다.
+3. wg.Wait() 메서드로 작업이 완료되기를 기다립니다. 하지만 for range 구문은 채널에 데이터가 들어오기를 계쏙 기다리기 때문에 
+4. 가 실행되지 않고 모든 고루틴이 멈추게 되어
+5. deadlock 이 되시됩니다.
+
+### 위 예제의 문제를 수정
+```go
+package main
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+func square(wg *sync.WaitGroup, ch chan int) {
+    for n := range ch {     // 2. 채널이 닫히면 종료
+        fmt.Printf("number: %d, Square: %d\n", n, n*n)
+        time.Sleep(time.Second)
+    }
+    wg.Done()
+}
+
+func main() {
+    var wg sync.WaitGroup
+    ch := make(chan int)
+
+    wg.Add(1)
+    go square(&wg, ch)
+    
+    for i := 0; i < 10; i++ {
+        ch <- i * 2
+    }
+    close(ch)               // 1. 채널 닫음
+    fmt.Println("close(ch)")
+    wg.Wait()
+}
+```
+1. 데이터를 모두 넣고 채널이 더는 필요없기 때문에 close(ch)를 호출해 닫아줍니다.
+2. for range에서 데이터를 모두 처리하고 난 다음에 채널이 닫힌 상태이면 for문을 종료합니다.
 
 
 
