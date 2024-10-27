@@ -10,10 +10,12 @@
 ```go
 var messages chan string = make(chan string)
 ```
-messages : 채널 인스턴스 변수
-chan string : 채널 타입
-chan : 채널 키워드
-string : 메시지 타입
+| 구문 | 설명 |
+| --- | --- |
+| `messages` | 채널 인스턴스 변수 |
+| `chan string` | 채널 타입 |
+| `chan` | 채널 키워드 |
+| `string` | 메시지 타입 |
 
 ### 23.1.2 채널에 데이터 넣기
 ```go
