@@ -37,7 +37,7 @@ var msg string = <- messages
 | `<-` | 연산자 |
 | `messages` | 채널 인스턴스 |
 
-### 23.1.4 채널 크기
+### 예제
 ```go
 package main
 import (
@@ -47,7 +47,7 @@ import (
 )
 
 func main() {
-    var wg sysnc.WaitGroup
+    var wg sync.WaitGroup
     ch := make(chan int)        // 채널 생성
 
     wg.Add(1)
@@ -62,6 +62,26 @@ func square(wg *sync.WaitGroup, ch chan int) {
     time.Sleep(time.Second)     // 1초 대기
     fmt.Printf("Square: %d\n", n*n)
     wg.Done()
+}
+```
+```go
+Square: 81
+```
+
+### 23.1.4 채널 크기
+일반적으로 채널을 생성하면 크기가 0인 채널이 만들어집니다.
+크기가 0이라는 뜻은 채널에 들어온 데이터를 담아줄 곳이 없다는 얘기가 됩니다.
+채널에서 데이터를 가져가지 않아서 프로그램이 멈추는 경우를 보겠습니다.
+
+```go
+package main
+import "fmt"
+
+func main() {
+    ch := make(chan int)        // 채널 생성
+
+    ch <- 9                     // 채널에 데이터 넣음
+    fmt.Println("Never print")
 }
 ```
 ```go
