@@ -320,7 +320,6 @@ func square(wg *sync.WaitGroup, ch chan int) {
 func main() {
     var wg sync.WaitGroup
     ch := make(chan int)
-    quit := make(chan bool)     // 1. 종료 채널
 
     wg.Add(1)
     go square(&wg, ch)
@@ -333,6 +332,24 @@ func main() {
 }
 ```
 ```go
+number: 0, Square: 0
+number: 2, Square: 4
+Tick
+number: 4, Square: 16
+Tick
+number: 6, Square: 36
+number: 8, Square: 64
+Tick
+number: 10, Square: 100
+Tick
+number: 12, Square: 144
+Tick
+number: 14, Square: 196
+Tick
+number: 16, Square: 256
+number: 18, Square: 324
+Tick
+Terminated!
 ```
 
 ### 23.1.9 채널로 생산자 소비자 패턴 구현하기
