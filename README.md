@@ -364,78 +364,91 @@ Terminated!
 ### > 예제
 ```go
 package main
+
 import (
-    "fmt"
-    "sync"
-    "time"
+	"fmt"
+	"sync"
+	"time"
 )
 
 type Car struct {
-    Body    string
-    Tire    string
-    Color   string
+	Body  string
+	Tire  string
+	Color string
 }
 
 var wg sync.WaitGroup
 var startTime = time.Now()
 
 func main() {
-    tireCh := make(chan *Car)
-    paintCh := make(chan *Car)
+	tireCh := make(chan *Car)
+	paintCh := make(chan *Car)
 
-    fmt.Printf("Start Factory\n")
+	fmt.Printf("Start Factory\n")
 
-    wg.Add(3)
-    go MakeBody(tireCh)
-    go InstallTire(tireCh, paintCh)
-    go PaintCar(paintCh)
+	wg.Add(3)
+	go MakeBody(tireCh)
+	go InstallTire(tireCh, paintCh)
+	go PaintCar(paintCh)
 
-    wg.Done()
-    fmt.Println("Close the factory")
+	wg.Wait()
+	fmt.Println("Close the factory")
 }
 
 func MakeBody(tireCh chan *Car) {
-    tick := time.Tick(time.Second)
-    after := time.After(10*time.Second)
+	tick := time.Tick(time.Second)
+	after := time.After(10 * time.Second)
 
-    for {                                   // 3. tick, terminate, ch 순서대로 처리
-        select {
-        case <-tick:
-            // Make a body
-            car := &Car{}
-            car.Body = "Sports car"
-            tireCh <- car
-        case <-after:
-            close(tireCh)
-            wg.Done()
-            return
-        }
-    }
+	for {
+		select {
+		case <-tick:
+			// Make a body
+			car := &Car{}
+			car.Body = "Sports car"
+			tireCh <- car
+		case <-after:
+			close(tireCh)
+			wg.Done()
+			return
+		}
+	}
 }
 
 func InstallTire(tireCh, paintCh chan *Car) {
-    for car := range tireCh {
-        // Make a body
-        time.Sleep(time.Second)
-        car.Tire = "Winter tire"
-        paintCh <- car
-    }
-    wg.Done()
-    close(paintCh)
+	for car := range tireCh {
+		// Make a body
+		time.Sleep(time.Second)
+		car.Tire = "Winter tire"
+		paintCh <- car
+	}
+	wg.Done()
+	close(paintCh)
 }
 
 func PaintCar(paintCh chan *Car) {
-    for car := range paintCh {
-        // Make a body
-        time.Sleep(time.Second)
-        car.Color = "Red"
-        duration := time.Now().Sub(startTime)
-        fmt.Printf("%.2f Complete Car: %s %s %s\n", duration.Seconds(), car.Body, car.Tire, car.Color)
-    }
-    wg.Done()
+	for car := range paintCh {
+		// Make a body
+		time.Sleep(time.Second)
+		car.Color = "Red"
+		duration := time.Now().Sub(startTime)
+		fmt.Printf("%.2f Complete Car: %s %s %s\n", duration.Seconds(), car.Body, car.Tire, car.Color)
+	}
+	wg.Done()
 }
 ```
 ```go
+Start Factory
+3.00 Complete Car: Sports car Winter tire Red
+4.00 Complete Car: Sports car Winter tire Red
+5.00 Complete Car: Sports car Winter tire Red
+6.00 Complete Car: Sports car Winter tire Red
+7.00 Complete Car: Sports car Winter tire Red
+8.00 Complete Car: Sports car Winter tire Red
+9.00 Complete Car: Sports car Winter tire Red
+10.00 Complete Car: Sports car Winter tire Red
+11.01 Complete Car: Sports car Winter tire Red
+12.01 Complete Car: Sports car Winter tire Red
+Close the factory
 ```
 
 ## 23.2 컨텍스트 사용하기
