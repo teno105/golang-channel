@@ -302,7 +302,7 @@ func square(wg *sync.WaitGroup, ch chan int) {
     tick := time.Tick(time.Second)          // 1. 1초 간격 시그널
     terminate := time.After(10*time.Second) // 2. 10초 이후 시그널
 
-    for {                                   // 2. tick, terminate, ch 순서대로 처리
+    for {                                   // 3. tick, terminate, ch 순서대로 처리
         select {
         case <-tick:
             fmt.Println("Tick")
@@ -351,6 +351,11 @@ number: 18, Square: 324
 Tick
 Terminated!
 ```
+
+1. time.Tick()은 일정 시간 간격 주기로 신호를 보내주는 채널을 생성해서 반환하는 함수입니다. 이 함수가 반환한 채널에서 데이터를 읽어오면, 일정 시간 간격으로 현재 시각을 나타내는 Time 객체를 반환합니다.
+2. time.After()는 현재 시간 이후로 일정 시간 경과 후에 신호를 보내주는 채널을 생성해서 반환하는 함수입니다. 이 함수가 반환한 채널에서 데이터를 읽으면, 일정 시간 경과 후에 현재 시각을 나타내는 Time 객체를 반환합니다.
+3. select문을 이용해서 tick, terminate, ch 순서로 채널에서 데이터 읽기를 시도합니다.
+
 
 ### 23.1.9 채널로 생산자 소비자 패턴 구현하기
 
