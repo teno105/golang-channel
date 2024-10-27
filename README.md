@@ -112,7 +112,7 @@ import (
 )
 
 func square(wg *sync.WaitGroup, ch chan int) {
-    for n := n range ch {       // 2. 데이터를 계속 기다림
+    for n := range ch {       // 2. 데이터를 계속 기다림
         fmt.Printf("number: %d, Square: %d\n", n, n*n)
         time.Sleep(time.Second)
     }
@@ -133,7 +133,33 @@ func main() {
 }
 ```
 ```go
-Square: 81
+==> Running golang-channel...
+number: 0, Square: 0
+number: 2, Square: 4
+number: 4, Square: 16
+number: 6, Square: 36
+number: 8, Square: 64
+number: 10, Square: 100
+number: 12, Square: 144
+number: 14, Square: 196
+number: 16, Square: 256
+number: 18, Square: 324
+fatal error: all goroutines are asleep - deadlock!
+
+goroutine 1 [semacquire]:
+sync.runtime_Semacquire(0x14000002101?)
+        /usr/local/go/src/runtime/sema.go:71 +0x2c
+sync.(*WaitGroup).Wait(0x1400000e0f0)
+        /usr/local/go/src/sync/waitgroup.go:118 +0x74
+main.main()
+        /Users/teno/study/golang-channel/cmd/golang-channel/main.go:27 +0xd0
+
+goroutine 4 [chan receive]:
+main.square(0x1400000e0f0, 0x140000200e0)
+        /Users/teno/study/golang-channel/cmd/golang-channel/main.go:10 +0xb4
+created by main.main in goroutine 1
+        /Users/teno/study/golang-channel/cmd/golang-channel/main.go:22 +0x98
+make: *** [run] Error 2
 ```
 
 
