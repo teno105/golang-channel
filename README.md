@@ -85,7 +85,12 @@ func main() {
 }
 ```
 ```go
-Square: 81
+fatal error: all goroutines are asleep - deadlock!
+
+goroutine 1 [chan send]:
+main.main()
+        /Users/teno/study/golang-channel/cmd/golang-channel/main.go:8 +0x34
+make: *** [run] Error 2
 ```
 
 
