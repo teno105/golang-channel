@@ -358,6 +358,85 @@ Terminated!
 
 
 ### 23.1.9 채널로 생산자 소비자 패턴 구현하기
+고루틴에서 뮤텍스를 사용하지 않는 방법 중 두 번째 방법인 채널을 이용해서 역할을 나누는 방법을 알아보겠습니다.
+한쪽에서 데이터를 생성해서 넣어주면 다른 쪽에서 생성된 데이터를 빼서 사용하는 방식을 생산자 소비자 패턴(Producer Consumer Pattern)이라고 합니다.
+
+### > 예제
+```go
+package main
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+type Car struct {
+    Body    string
+    Tire    string
+    Color   string
+}
+
+var wg sync.WaitGroup
+var startTime = time.Now()
+
+func main() {
+    tireCh := make(chan *Car)
+    paintCh := make(chan *Car)
+
+    fmt.Printf("Start Factory\n")
+
+    wg.Add(3)
+    go MakeBody(tireCh)
+    go InstallTire(tireCh, paintCh)
+    go PaintCar(paintCh)
+
+    wg.Done()
+    fmt.Println("Close the factory")
+}
+
+func MakeBody(tireCh chan *Car) {
+    tick := time.Tick(time.Second)
+    after := time.After(10*time.Second)
+
+    for {                                   // 3. tick, terminate, ch 순서대로 처리
+        select {
+        case <-tick:
+            // Make a body
+            car := &Car{}
+            car.Body = "Sports car"
+            tireCh <- car
+        case <-after:
+            close(tireCh)
+            wg.Done()
+            return
+        }
+    }
+}
+
+func InstallTire(tireCh, paintCh chan *Car) {
+    for car := range tireCh {
+        // Make a body
+        time.Sleep(time.Second)
+        car.Tire = "Winter tire"
+        paintCh <- car
+    }
+    wg.Done()
+    close(paintCh)
+}
+
+func PaintCar(paintCh chan *Car) {
+    for car := range paintCh {
+        // Make a body
+        time.Sleep(time.Second)
+        car.Color = "Red"
+        duration := time.Now().Sub(startTime)
+        fmt.Printf("%.2f Complete Car: %s %s %s\n", duration.Seconds(), car.Body, car.Tire, car.Color)
+    }
+    wg.Done()
+}
+```
+```go
+```
 
 ## 23.2 컨텍스트 사용하기
 컨텍스트(context)는 context 패키지에서 제공하는 기능으로 작업을 지시할 때 작업 가능 시간, 작업 취소 등의 조건을 지시할 수 있는 작업 명세서 역할을 합니다.
